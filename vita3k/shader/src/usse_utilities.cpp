@@ -1127,7 +1127,9 @@ spv::Id load(spv::Builder &b, const SpirvShaderParameters &params, SpirvUtilFunc
         // Calculate the "at" offset.
         spv::Id idx_reg_val = b.createLoad(b.createOp(spv::OpAccessChain, b.makePointer(spv::StorageClassPrivate, type_i32), { params.indexes, b.makeIntConstant(idx_off) }), spv::NoPrecision);
 
-        spv::Id real_idx = b.createBinOp(spv::OpIAdd, type_i32, b.createBinOp(spv::OpIMul, type_i32, idx_reg_val, b.makeIntConstant(2)), b.makeIntConstant(add_off));
+        // The index already addresses scalar registers. Native programs apply
+        // their array element stride before writing the index register.
+        spv::Id real_idx = b.createBinOp(spv::OpIAdd, type_i32, idx_reg_val, b.makeIntConstant(add_off));
         finalize_offset = real_idx;
 
         idx_in_arr_1 = b.createBinOp(spv::OpSDiv, type_i32, real_idx, b.makeIntConstant(4));
