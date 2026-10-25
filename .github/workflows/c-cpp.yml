@@ -2,6 +2,8 @@ name: Build CI
 
 on:
   push:
+    branches-ignore:
+      - fix/cross-ange-indexed-uniforms
     paths-ignore:
       - '**.md'
   pull_request:

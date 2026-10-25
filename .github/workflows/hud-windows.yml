@@ -1,0 +1,76 @@
+name: Experimental HUD Windows build
+
+on:
+  push:
+    branches: [fix/cross-ange-indexed-uniforms]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hud-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_CONFIG: Release
+  QT_VERSION: '6.11.0'
+  SCCACHE_GHA_ENABLED: 'true'
+  VCPKG_ROOT: C:\vcpkg
+  VCPKG_DEFAULT_BINARY_CACHE: C:\vcpkg-binary-cache
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/cache@v6
+        with:
+          path: C:\vcpkg-binary-cache
+          key: hud-windows-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json', 'cmake/**', '.ci/**', 'vcpkg.json') }}
+          restore-keys: hud-windows-
+
+      - name: Set up dependencies
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
+          .\.ci\setup-windows-msvc.ps1 -VcpkgTriplet 'x64-windows-static-md'
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x86_64
+
+      - uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          disable_annotations: true
+
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          modules: qtmultimedia
+          host: windows
+          target: desktop
+          arch: win64_msvc2022_64
+          cache: true
+          install-deps: false
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@f383b3c7d9658e881bd8ce8810057393bd934ee1
+
+      - name: Build and run CTest
+        shell: bash
+        run: bash ./.ci/build-desktop.sh --preset ci-windows-msvc --config Release
+
+      - name: Package test build
+        shell: bash
+        run: bash ./.ci/package-desktop.sh --platform windows-x64 --preset ci-windows-msvc --config Release --output-dir artifacts/vita3k-hud-windows-x64
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vita3k-hud-windows-x64-${{ github.sha }}
+          path: artifacts/vita3k-hud-windows-x64
+          if-no-files-found: error
+          retention-days: 14
