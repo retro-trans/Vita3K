@@ -66,6 +66,11 @@ if(NOT ANDROID)
 	target_include_directories(renderer-texture-cache-tests PRIVATE include)
 	target_link_libraries(renderer-texture-cache-tests PRIVATE mem gxm shader googletest util ddspp stb ffmpeg xxHash::xxhash)
 	add_test(NAME renderer-texture-cache COMMAND renderer-texture-cache-tests)
+	if(WIN32)
+		# FFmpeg's runtime DLLs are deployed beside the main executable.
+		set_tests_properties(renderer-texture-cache PROPERTIES
+			ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${CMAKE_BINARY_DIR}/bin/$<CONFIG>")
+	endif()
 endif()
 
 if(ANDROID)
