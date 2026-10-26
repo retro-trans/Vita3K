@@ -51,6 +51,12 @@ target_include_directories(renderer PUBLIC include)
 target_link_libraries(renderer PUBLIC display mem stb shader glutil threads config util vkutil overlay)
 target_link_libraries(renderer PRIVATE dialog ddspp SDL3::SDL3 stb ffmpeg xxHash::xxhash concurrentqueue)
 
+if(NOT ANDROID)
+	add_executable(renderer-texture-cache-tests tests/texture_cache_tests.cpp)
+	target_link_libraries(renderer-texture-cache-tests PRIVATE renderer gxm googletest)
+	add_test(NAME renderer-texture-cache COMMAND renderer-texture-cache-tests)
+endif()
+
 if(ANDROID)
 	target_link_libraries(renderer PRIVATE android adrenotools)
 endif()

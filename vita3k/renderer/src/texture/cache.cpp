@@ -688,8 +688,12 @@ void TextureCache::cache_and_bind_texture(const SceGxmTexture &gxm_texture, MemS
         // (for example, uniform buffer value and texture data got mixed, so page faults are triggered too many, it's not always good).
         // This works under the assumption that once this big enough texture decided to modify. It will have to modify either all of its data,
         // or replace with an entire new texture.
+        // The palette lives separately from the protected pixel data. A game
+        // can change only its colors, leaving every pixel index untouched.
+        // Keep paletted textures on the hash path, which checks both buffers.
+        const bool paletted = gxm::is_paletted_format(gxm::get_base_format(gxm::get_format(gxm_texture)));
         bool should_use_hash = true;
-        if (use_protect && info->texture_size >= mem.host_page_size * 4) {
+        if (use_protect && !paletted && info->texture_size >= mem.host_page_size * 4) {
             range_protect_begin = align(gxm_texture.data_addr << 2, mem.host_page_size);
             range_protect_end = align_down((gxm_texture.data_addr << 2) + info->texture_size, mem.host_page_size);
 
