@@ -52,8 +52,19 @@ target_link_libraries(renderer PUBLIC display mem stb shader glutil threads conf
 target_link_libraries(renderer PRIVATE dialog ddspp SDL3::SDL3 stb ffmpeg xxHash::xxhash concurrentqueue)
 
 if(NOT ANDROID)
-	add_executable(renderer-texture-cache-tests tests/texture_cache_tests.cpp)
-	target_link_libraries(renderer-texture-cache-tests PRIVATE renderer gxm googletest)
+	# Exercise the production cache without pulling in the app/session launcher
+	# through the complete GPU renderer and overlay dependency graph.
+	add_executable(renderer-texture-cache-tests
+		tests/texture_cache_tests.cpp
+		src/texture/cache.cpp
+		src/texture/format.cpp
+		src/texture/palette.cpp
+		src/texture/pvrt-dec.cpp
+		src/texture/replacement.cpp
+		src/texture/yuv.cpp
+	)
+	target_include_directories(renderer-texture-cache-tests PRIVATE include)
+	target_link_libraries(renderer-texture-cache-tests PRIVATE mem gxm shader googletest util ddspp stb ffmpeg xxHash::xxhash)
 	add_test(NAME renderer-texture-cache COMMAND renderer-texture-cache-tests)
 endif()
 
