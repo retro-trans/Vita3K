@@ -13,6 +13,11 @@
 #include <cstring>
 #include <tuple>
 
+// Texture export normally shares this implementation with renderer/scene.cpp.
+// Keep the component test independent of scene and application initialization.
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+
 namespace {
 class ProbeCache final : public renderer::TextureCache {
 public:
